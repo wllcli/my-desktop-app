@@ -1,4 +1,4 @@
 import { appWindowIcon } from './image'
 
-export { appWindowIcon }
+export default { appWindowIcon }
 
