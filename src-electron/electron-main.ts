@@ -1,8 +1,9 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import os from 'os';
+import { initialize, enable } from '@electron/remote/main/index.js'
 import { fileURLToPath } from 'url'
-
+initialize();
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform();
 
@@ -19,7 +20,9 @@ async function createWindow() {
     width: 1000,
     height: 600,
     useContentSize: true,
+    frame:false,
     webPreferences: {
+      sandbox:false,
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
       preload: path.resolve(
@@ -28,7 +31,7 @@ async function createWindow() {
       ),
     },
   });
-
+  enable(mainWindow.webContents);
   if (process.env.DEV) {
     await mainWindow.loadURL(process.env.APP_URL);
   } else {
