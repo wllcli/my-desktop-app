@@ -27,3 +27,31 @@
  *   }
  * }
  */
+import { contextBridge } from 'electron'
+import { BrowserWindow } from '@electron/remote'
+import { WindowAPI } from '../src/common/interface/common'
+
+
+
+const windowAPI: WindowAPI = {
+  minimize() {
+    const win = BrowserWindow.getFocusedWindow()
+    if (!win) return
+    win.minimize()
+  },
+
+  toggleMaximize() {
+    const win = BrowserWindow.getFocusedWindow()
+    if (!win) return
+
+    win.isMaximized() ? win.unmaximize() : win.maximize()
+  },
+
+  close() {
+    const win = BrowserWindow.getFocusedWindow()
+    if (!win) return
+    win.close()
+  }
+}
+
+contextBridge.exposeInMainWorld('myWindowAPI', windowAPI)

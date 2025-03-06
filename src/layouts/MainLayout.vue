@@ -1,102 +1,67 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
-
-        <q-toolbar-title>
-          Quasar App
-        </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
-      </q-toolbar>
+  <q-layout view="hhh lpr lFf" style="height: 300px" class="shadow-2 rounded-borders">
+    <q-header v-if="isElectron">
+      <q-bar v-if="isMac" class="q-electron-drag">
+        <q-btn dense flat round icon="lens" size="8.5px" color="red" />
+        <q-btn dense flat round icon="lens" size="8.5px" color="yellow" />
+        <q-btn dense flat round icon="lens" size="8.5px" color="green" />
+        <div class="col text-center text-weight-bold">
+          my app
+        </div>
+      </q-bar>
+      <q-bar v-else class="q-electron-drag">
+        <q-icon name="laptop_chromebook" />
+        <div>my app</div>
+        <q-space />
+        <q-btn dense flat icon="minimize" @click="minimize" />
+        <q-btn dense flat icon="crop_square" @click="toggleMaximize" />
+        <q-btn dense flat icon="close" @click="closeApp" />
+      </q-bar>
     </q-header>
 
     <q-drawer
-      v-model="leftDrawerOpen"
+      v-model="drawer"
       show-if-above
-      bordered
+      :width="200"
+      :breakpoint="400"
     >
-      <q-list>
-        <q-item-label
-          header
-        >
-          Essential Links
-        </q-item-label>
+      <q-scroll-area style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd">
+        <Menu/>
 
-        <EssentialLink
-          v-for="link in linksList"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
+      </q-scroll-area>
+      <q-img class="absolute-top" src="https://cdn.quasar.dev/img/material.png" style="height: 150px">
+        <div class="absolute-bottom bg-transparent">
+          <q-avatar size="56px" class="q-mb-sm">
+            <img src="https://cdn.quasar.dev/img/boy-avatar.png" alt="avatar" />
+          </q-avatar>
+          <div class="text-weight-bold">杂乱无章</div>
+          <div> <q-btn icon="rss_feed" size="sm" type="a" href="https://github.com/wllcyg" target="_blank"></q-btn> </div>
+        </div>
+      </q-img>
     </q-drawer>
-
     <q-page-container>
-      <router-view />
+      <q-page>
+        <router-view />
+      </q-page>
     </q-page-container>
   </q-layout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import EssentialLink, { type EssentialLinkProps } from 'components/EssentialLink.vue';
+import Menu from 'src/layouts/Menu.vue'
+import { ref } from 'vue'
+import { usePlatForem } from '../hooks/usePlatForem'
+const { isMac,isElectron } = usePlatForem()
+const drawer = ref(true)
+function minimize() {
+  window.myWindowAPI.minimize()
+}
 
-const linksList: EssentialLinkProps[] = [
-  {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev'
-  },
-  {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework'
-  },
-  {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
-    icon: 'chat',
-    link: 'https://chat.quasar.dev'
-  },
-  {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
-  },
-  {
-    title: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
-  },
-  {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev'
-  },
-  {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
-  }
-];
+function toggleMaximize() {
+  window.myWindowAPI.toggleMaximize()
+}
 
-const leftDrawerOpen = ref(false);
-
-function toggleLeftDrawer () {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
+function closeApp() {
+  window.myWindowAPI.close()
 }
 </script>

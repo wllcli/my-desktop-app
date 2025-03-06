@@ -10,7 +10,9 @@
     "test": "echo \"No test specified\" && exit 0",
     "dev": "quasar dev -m electron",
     "build": "quasar build -m electron",
-    "postinstall": "quasar prepare"
+    "postinstall": "quasar prepare",
+    "dev-web": "quasar dev",
+    "build-web": "quasar build"
   },
   "dependencies": {
     "@electron/remote": "^2.1.2",
