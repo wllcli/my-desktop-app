@@ -17,7 +17,7 @@ function setPath(path: string) {
 }
 onMounted(() => {
   getMenuList()
-  console.log(activePath.value)
+  console.log('menuList',process.env)
 })
 
 </script>

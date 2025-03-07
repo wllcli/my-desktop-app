@@ -29,10 +29,10 @@
         <Menu/>
 
       </q-scroll-area>
-      <q-img class="absolute-top" src="https://cdn.quasar.dev/img/material.png" style="height: 150px">
+      <q-img class="absolute-top" src="src/assets/material.png" style="height: 150px">
         <div class="absolute-bottom bg-transparent">
           <q-avatar size="56px" class="q-mb-sm">
-            <img src="https://cdn.quasar.dev/img/boy-avatar.png" alt="avatar" />
+            <img src="src/assets/boy-avatar.png" alt="avatar" />
           </q-avatar>
           <div class="text-weight-bold">杂乱无章</div>
           <div> <q-btn icon="rss_feed" size="sm" type="a" href="https://github.com/wllcyg" target="_blank"></q-btn> </div>
