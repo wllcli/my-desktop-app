@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="hhh lpr lFf" style="height: 300px" class="shadow-2 rounded-borders">
+  <q-layout view="hhh lpr lFf" class="layout-container rounded-borders">
     <q-header v-if="isElectron">
       <q-bar v-if="isMac" class="q-electron-drag">
         <q-btn dense flat round icon="lens" size="8.5px" color="red" />
@@ -18,18 +18,9 @@
         <q-btn dense flat icon="close" @click="closeApp" />
       </q-bar>
     </q-header>
-
-    <q-drawer
-      v-model="drawer"
-      show-if-above
-      :width="200"
-      :breakpoint="400"
-    >
-      <q-scroll-area style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd">
-        <Menu/>
-
-      </q-scroll-area>
-      <q-img class="absolute-top" src="src/assets/material.png" style="height: 150px">
+    <div class="content">
+      <div class="slider-container">
+        <q-img  src="src/assets/material.png" style="height: 150px">
         <div class="absolute-bottom bg-transparent">
           <q-avatar size="56px" class="q-mb-sm">
             <img src="src/assets/boy-avatar.png" alt="avatar" />
@@ -38,12 +29,13 @@
           <div> <q-btn icon="rss_feed" size="sm" type="a" href="https://github.com/wllcyg" target="_blank"></q-btn> </div>
         </div>
       </q-img>
-    </q-drawer>
-    <q-page-container>
-      <q-page>
+        <Menu/>
+      </div>
+      <div class="content-container">
         <router-view />
-      </q-page>
-    </q-page-container>
+      </div>
+    </div>
+
   </q-layout>
 </template>
 
@@ -51,7 +43,7 @@
 import Menu from 'src/layouts/Menu.vue'
 import { ref } from 'vue'
 import { usePlatForem } from '../hooks/usePlatForem'
-const { isMac,isElectron } = usePlatForem()
+const { isMac, isElectron } = usePlatForem()
 const drawer = ref(true)
 function minimize() {
   window.myWindowAPI.minimize()
@@ -65,3 +57,31 @@ function closeApp() {
   window.myWindowAPI.close()
 }
 </script>
+<style scoped lang="scss">
+$height:calc(100vh - 32px);
+.layout-container {
+  overflow: hidden;
+}
+
+.content {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  .slider-container {
+    border-right: 1px solid #ddd;
+    height: $height;
+    overflow-y: auto;
+  }
+  .content-container {
+    background-color: #FAFAFA;
+    padding: 20px;
+    height: $height;
+    overflow-y: auto;
+  }
+}
+
+.q-page-container {
+  background-color: #FAFAFA;
+
+}
+</style>

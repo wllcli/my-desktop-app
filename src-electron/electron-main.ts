@@ -21,7 +21,7 @@ async function createWindow() {
     height: 600,
     useContentSize: true,
     frame:false,
-    minWidth: 600,
+    minWidth: 800,
     webPreferences: {
       sandbox:false,
       contextIsolation: true,
