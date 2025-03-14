@@ -29,7 +29,7 @@
           <div> <q-btn icon="rss_feed" size="sm" type="a" href="https://github.com/wllcyg" target="_blank"></q-btn> </div>
         </div>
       </q-img>
-        <Menu/>
+        <Menu />
       </div>
       <div class="content-container">
         <router-view />
@@ -39,12 +39,10 @@
   </q-layout>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import Menu from 'src/layouts/Menu.vue'
-import { ref } from 'vue'
 import { usePlatForem } from '../hooks/usePlatForem'
 const { isMac, isElectron } = usePlatForem()
-const drawer = ref(true)
 function minimize() {
   window.myWindowAPI.minimize()
 }

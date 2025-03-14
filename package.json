@@ -1,5 +1,5 @@
 {
-  "name": "quasar-project",
+  "name": "pro1",
   "version": "0.0.1",
   "description": "A Quasar Project",
   "productName": "Quasar App",
@@ -9,10 +9,8 @@
   "scripts": {
     "test": "echo \"No test specified\" && exit 0",
     "dev": "quasar dev -m electron",
-    "build": "quasar build -m electron",
-    "postinstall": "quasar prepare",
-    "dev-web": "quasar dev",
-    "build-web": "quasar build"
+    "build": "quasar build",
+    "postinstall": "quasar prepare"
   },
   "dependencies": {
     "@electron/remote": "^2.1.2",
@@ -22,16 +20,14 @@
     "quasar": "^2.16.0",
     "systeminformation": "^5.25.11",
     "vue": "^3.4.18",
-    "vue-router": "^4.0.12"
+    "vue-router": "^4.0.0"
   },
   "devDependencies": {
     "@electron/packager": "^18.3.2",
     "@quasar/app-vite": "^2.1.0",
-    "@types/node": "^20.5.9",
     "autoprefixer": "^10.4.2",
-    "dotenv": "^16.4.7",
-    "electron": "^35.0.0",
-    "typescript": "~5.5.3"
+    "electron": "^35.0.1",
+    "postcss": "^8.4.14"
   },
   "engines": {
     "node": "^28 || ^26 || ^24 || ^22 || ^20 || ^18",

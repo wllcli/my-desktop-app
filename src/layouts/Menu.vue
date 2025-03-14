@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import {useRouter} from 'vue-router'
 import {onMounted, ref} from "vue";
 
@@ -11,7 +11,7 @@ function getMenuList() {
     return !r.redirect && !r.path.includes('*')  // [!code focus]
   })
 }
-function setPath(path: string) {
+function setPath(path) {
   activePath.value = path
   router.push(path)
 }
