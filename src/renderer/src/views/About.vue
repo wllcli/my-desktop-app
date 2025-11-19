@@ -78,6 +78,7 @@ import Versions from '../components/Versions.vue'
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem;
+  background: #ffffff;
 }
 
 .title {
@@ -85,7 +86,7 @@ import Versions from '../components/Versions.vue'
   font-weight: 700;
   text-align: center;
   margin-bottom: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -98,16 +99,18 @@ import Versions from '../components/Versions.vue'
 }
 
 .app-info, .tech-stack, .versions-section {
-  background: var(--ev-c-bg-soft);
+  background: #ffffff;
   padding: 1.5rem;
   border-radius: 12px;
-  border: 1px solid var(--ev-c-border);
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .app-info h2, .tech-stack h2, .versions-section h2 {
   margin-top: 0;
   margin-bottom: 1rem;
-  color: var(--ev-c-text-1);
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 600;
 }
 
 .info-grid {
@@ -119,7 +122,7 @@ import Versions from '../components/Versions.vue'
   display: flex;
   justify-content: space-between;
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--ev-c-border);
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .info-item:last-child {
@@ -128,11 +131,11 @@ import Versions from '../components/Versions.vue'
 
 .label {
   font-weight: 600;
-  color: var(--ev-c-text-2);
+  color: rgba(0, 0, 0, 0.65);
 }
 
 .value {
-  color: var(--ev-c-text-1);
+  color: rgba(0, 0, 0, 0.85);
 }
 
 .tech-list {
@@ -145,8 +148,16 @@ import Versions from '../components/Versions.vue'
   align-items: center;
   gap: 1rem;
   padding: 0.75rem;
-  background: var(--ev-c-bg);
+  background: #fafafa;
   border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.2s ease;
+}
+
+.tech-item:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .tech-icon {
@@ -157,12 +168,12 @@ import Versions from '../components/Versions.vue'
 
 .tech-details h4 {
   margin: 0 0 0.25rem 0;
-  color: var(--ev-c-text-1);
+  color: rgba(0, 0, 0, 0.85);
 }
 
 .tech-details p {
   margin: 0;
-  color: var(--ev-c-text-2);
+  color: rgba(0, 0, 0, 0.65);
   font-size: 0.9rem;
 }
 
@@ -173,26 +184,18 @@ import Versions from '../components/Versions.vue'
   margin-top: 2rem;
 }
 
-.btn {
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-block;
+.versions {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  margin-top: 2rem;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-secondary {
-  background: var(--ev-c-bg-soft);
-  color: var(--ev-c-text-1);
-  border: 1px solid var(--ev-c-border);
-}
-
-.btn-secondary:hover {
-  background: var(--ev-c-bg-mute);
-  transform: translateY(-2px);
+.versions li {
+  color: rgba(0, 0, 0, 0.85);
 }
 </style>

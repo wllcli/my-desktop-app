@@ -39,90 +39,100 @@
 </template>
 
 <script setup lang="ts">
-// 首页逻辑可以在这里添加
+import {
+  ThunderboltOutlined,
+  DashboardOutlined,
+  SafetyCertificateOutlined
+} from '@ant-design/icons-vue'
+
+const features = [
+  {
+    icon: ThunderboltOutlined,
+    title: '⚡ 快速开发',
+    description: '使用 Vite 构建工具，享受极速的开发体验'
+  },
+  {
+    icon: DashboardOutlined,
+    title: '🎨 现代化界面',
+    description: '基于 Vue 3 Composition API，构建响应式用户界面'
+  },
+  {
+    icon: SafetyCertificateOutlined,
+    title: '🔒 类型安全',
+    description: '完整的 TypeScript 支持，提供更好的代码提示和错误检查'
+  }
+]
 </script>
 
 <style scoped>
 .home {
-  text-align: center;
-  padding: 2rem;
-  max-width: 800px;
+  padding: 48px 24px;
+  max-width: 1200px;
   margin: 0 auto;
+  background: #ffffff;
 }
 
 .title {
-  font-size: 3rem;
+  font-size: 48px;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
+  text-align: center;
 }
 
 .description {
-  font-size: 1.2rem;
-  color: var(--ev-c-text-2);
-  margin-bottom: 3rem;
+  font-size: 18px;
+  color: rgba(0, 0, 0, 0.65);
+  margin-bottom: 0;
+  text-align: center;
   line-height: 1.6;
 }
 
-.features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+.feature-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80px;
+  font-size: 48px;
+  color: #1890ff;
 }
 
 .feature-card {
-  background: var(--ev-c-bg-soft);
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid var(--ev-c-border);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  transition: all 0.2s ease;
 }
 
 .feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(24, 144, 255, 0.15);
 }
 
-.feature-card h3 {
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-  color: var(--ev-c-text-1);
+.feature-card :deep(.ant-card) {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
 }
 
-.feature-card p {
-  color: var(--ev-c-text-2);
-  line-height: 1.5;
+.feature-card :deep(.ant-card-body) {
+  background: #ffffff;
 }
 
-.actions {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.btn {
-  padding: 0.75rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+.feature-card :deep(.ant-card-meta-title) {
+  font-size: 16px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-block;
+  margin-top: 16px;
+  color: rgba(0, 0, 0, 0.85);
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+.feature-card :deep(.ant-card-meta-description) {
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.65);
 }
 </style>

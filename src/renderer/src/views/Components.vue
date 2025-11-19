@@ -214,6 +214,7 @@ const showInfo = () => {
 <style scoped>
 .components-page {
   padding: 24px;
+  background: #f5f5f5;
 }
 
 .content {
@@ -223,9 +224,60 @@ const showInfo = () => {
 
 .demo-card {
   margin-bottom: 24px;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .demo-card :deep(.ant-card-head) {
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.demo-card :deep(.ant-card-head-title) {
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 600;
+}
+
+.demo-card :deep(.ant-card-body) {
+  background: #ffffff;
+}
+
+.demo-card :deep(.ant-page-header) {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  margin-bottom: 24px;
+}
+
+.demo-card :deep(.ant-page-header-heading-title) {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.demo-card :deep(.ant-page-header-heading-sub-title) {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.demo-card :deep(.ant-statistic-title) {
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.demo-card :deep(.ant-statistic-content) {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.demo-card :deep(.ant-progress-text) {
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.demo-card :deep(.ant-tabs-tab) {
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.demo-card :deep(.ant-tabs-tab-active) {
+  color: #1890ff;
+}
+
+.demo-card :deep(.ant-tabs-ink-bar) {
+  background: #1890ff;
 }
 </style>
