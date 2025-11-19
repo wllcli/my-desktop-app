@@ -1,28 +1,40 @@
 <template>
   <div class="home">
-    <h1 class="title">欢迎来到我的应用</h1>
-    <p class="description">这是一个基于 Electron + Vue 3 + TypeScript 的桌面应用</p>
+    <a-row justify="center" style="margin-bottom: 48px">
+      <a-col>
+        <h1 class="title">欢迎来到我的应用</h1>
+        <p class="description">这是一个基于 Electron + Vue 3 + TypeScript 的桌面应用</p>
+      </a-col>
+    </a-row>
 
-    <div class="features">
-      <div class="feature-card">
-        <h3>⚡ 快速开发</h3>
-        <p>使用 Vite 构建工具，享受极速的开发体验</p>
-      </div>
-      <div class="feature-card">
-        <h3>🎨 现代化界面</h3>
-        <p>基于 Vue 3 Composition API，构建响应式用户界面</p>
-      </div>
-      <div class="feature-card">
-        <h3>🔒 类型安全</h3>
-        <p>完整的 TypeScript 支持，提供更好的代码提示和错误检查</p>
-      </div>
-    </div>
+    <a-row :gutter="24" style="margin-bottom: 48px">
+      <a-col :xs="24" :md="8" v-for="(feature, index) in features" :key="index">
+        <a-card
+          class="feature-card"
+          :hoverable="true"
+          :bordered="false"
+          style="margin-bottom: 24px"
+        >
+          <template #cover>
+            <div class="feature-icon">
+              <component :is="feature.icon" />
+            </div>
+          </template>
+          <a-card-meta :title="feature.title" :description="feature.description" />
+        </a-card>
+      </a-col>
+    </a-row>
 
-    <div class="actions">
-      <button @click="$router.push('/about')" class="btn btn-primary">
-        了解更多
-      </button>
-    </div>
+    <a-row justify="center">
+      <a-space size="large">
+        <a-button type="primary" size="large" @click="$router.push('/about')">
+          了解更多
+        </a-button>
+        <a-button size="large" @click="$router.push('/components')">
+          查看组件
+        </a-button>
+      </a-space>
+    </a-row>
   </div>
 </template>
 

@@ -1,77 +1,94 @@
 <script setup lang="ts">
 import { RouterView, RouterLink } from 'vue-router'
+import {
+  HomeOutlined,
+  InfoCircleOutlined,
+  AppstoreOutlined
+} from '@ant-design/icons-vue'
 </script>
 
 <template>
-  <div id="app">
-    <nav class="navbar">
+  <a-layout id="app">
+    <a-layout-header class="navbar">
       <div class="nav-brand">
         <h2>My App</h2>
       </div>
       <div class="nav-links">
-        <RouterLink to="/" class="nav-link">首页</RouterLink>
-        <RouterLink to="/about" class="nav-link">关于</RouterLink>
+        <RouterLink to="/" class="nav-link">
+          <HomeOutlined />
+          首页
+        </RouterLink>
+        <RouterLink to="/components" class="nav-link">
+          <AppstoreOutlined />
+          组件
+        </RouterLink>
+        <RouterLink to="/about" class="nav-link">
+          <InfoCircleOutlined />
+          关于
+        </RouterLink>
       </div>
-    </nav>
+    </a-layout-header>
 
-    <main class="main-content">
+    <a-layout-content class="main-content">
       <RouterView />
-    </main>
-  </div>
+    </a-layout-content>
+  </a-layout>
 </template>
 
 <style>
 #app {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background: var(--ev-c-bg-soft);
-  border-bottom: 1px solid var(--ev-c-border);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0 24px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .nav-brand h2 {
   margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .nav-links {
   display: flex;
-  gap: 1rem;
+  gap: 8px;
 }
 
 .nav-link {
-  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
   text-decoration: none;
-  color: var(--ev-c-text-1);
+  color: rgba(0, 0, 0, 0.85);
   border-radius: 6px;
   transition: all 0.2s ease;
   font-weight: 500;
+  font-size: 14px;
 }
 
 .nav-link:hover {
-  background: var(--ev-c-bg-mute);
-  color: var(--ev-c-brand);
+  background: #f5f5f5;
+  color: #1890ff;
 }
 
 .nav-link.router-link-active {
-  background: var(--ev-c-brand);
+  background: #1890ff;
   color: white;
 }
 
 .main-content {
-  flex: 1;
-  padding: 0;
-  background: var(--ev-c-bg);
+  background: #f0f2f5;
+  min-height: calc(100vh - 64px);
 }
 </style>
