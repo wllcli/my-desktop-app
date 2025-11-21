@@ -1,8 +1,8 @@
 <template>
-  <div class="class-manage">
+  <div class="course-manage">
     <a-page-header
-      title="班级管理"
-      sub-title="管理所有班级信息"
+      title="课程管理"
+      sub-title="管理所有课程信息"
       style="background: #ffffff; border: 1px solid #e8e8e8; margin-bottom: 24px;"
     />
 
@@ -14,39 +14,20 @@
             <a-space>
               <a-input-search
                 v-model:value="searchText"
-                placeholder="搜索班级名称"
+                placeholder="搜索课程名称或代码"
                 style="width: 300px"
                 @search="handleSearch"
                 allow-clear
               />
               <a-select
-                v-model:value="filterGrade"
-                placeholder="选择年级"
+                v-model:value="filterStatus"
+                placeholder="选择状态"
                 style="width: 120px"
                 allow-clear
                 @change="handleFilter"
               >
-                <a-select-option value="一年级">一年级</a-select-option>
-                <a-select-option value="二年级">二年级</a-select-option>
-                <a-select-option value="三年级">三年级</a-select-option>
-                <a-select-option value="四年级">四年级</a-select-option>
-                <a-select-option value="五年级">五年级</a-select-option>
-                <a-select-option value="六年级">六年级</a-select-option>
-              </a-select>
-              <a-select
-                v-model:value="filterAcademicYear"
-                placeholder="选择学年"
-                style="width: 150px"
-                allow-clear
-                @change="handleFilter"
-              >
-                <a-select-option
-                  v-for="option in academicYearOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </a-select-option>
+                <a-select-option value="active">活跃</a-select-option>
+                <a-select-option value="inactive">停用</a-select-option>
               </a-select>
               <a-button @click.stop.prevent="handleReset" style="pointer-events: auto; position: relative; z-index: 1;">
                 <template #icon>
@@ -57,9 +38,9 @@
             </a-space>
           </a-col>
           <a-col :span="12" style="text-align: right;">
-            <a-button type="primary" @click="showAddModal">
+            <a-button type="primary" @click.stop.prevent="showAddModal" style="pointer-events: auto;">
               <PlusOutlined />
-              新增班级
+              新增课程
             </a-button>
           </a-col>
         </a-row>
@@ -67,31 +48,26 @@
 
       <!-- 统计卡片 -->
       <a-row :gutter="16" style="margin-bottom: 24px;">
-        <a-col :span="6">
+        <a-col :span="8">
           <a-card class="stat-card" style="background: #ffffff; border: 1px solid #e8e8e8;">
-            <a-statistic title="总班级数" :value="filteredData.length" />
+            <a-statistic title="总课程数" :value="filteredData.length" />
           </a-card>
         </a-col>
-        <a-col :span="6">
+        <a-col :span="8">
           <a-card class="stat-card" style="background: #ffffff; border: 1px solid #e8e8e8;">
-            <a-statistic title="总学生数" :value="totalStudents" />
+            <a-statistic title="活跃课程" :value="activeCoursesCount" />
           </a-card>
         </a-col>
-        <a-col :span="6">
+        <a-col :span="8">
           <a-card class="stat-card" style="background: #ffffff; border: 1px solid #e8e8e8;">
-            <a-statistic title="活跃班级" :value="activeClasses" />
-          </a-card>
-        </a-col>
-        <a-col :span="6">
-          <a-card class="stat-card" style="background: #ffffff; border: 1px solid #e8e8e8;">
-            <a-statistic title="平均人数" :value="averageStudents" />
+            <a-statistic title="平均及格分" :value="averagePassingScore" />
           </a-card>
         </a-col>
       </a-row>
 
-      <!-- 班级列表 -->
+      <!-- 课程列表 -->
       <a-card
-        title="班级列表"
+        title="课程列表"
         class="table-card"
         style="background: #ffffff; border: 1px solid #e8e8e8;"
       >
@@ -100,16 +76,15 @@
           :data-source="filteredData"
           :pagination="pagination"
           row-key="id"
-          :scroll="{ x: 1200 }"
         >
           <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'passingScore'">
+              <a-tag color="orange">{{ record.passingScore }}分</a-tag>
+            </template>
             <template v-if="column.key === 'status'">
-              <a-tag :color="record.status === 'active' ? 'green' : 'red'">
-                {{ record.status === 'active' ? '活跃' : '停用' }}
+              <a-tag :color="getStatusColor(record.status)">
+                {{ getStatusText(record.status) }}
               </a-tag>
-              <a-tooltip v-if="record.status === 'active' && record.studentCount > 0" title="该班级有活跃学生，无法直接停用">
-                <InfoCircleOutlined style="color: #faad14; margin-left: 4px;" />
-              </a-tooltip>
             </template>
             <template v-if="column.key === 'action'">
               <a-space>
@@ -122,7 +97,7 @@
                   查看
                 </a-button>
                 <a-popconfirm
-                  title="确定要删除这个班级吗？"
+                  title="确定要删除这个课程吗？"
                   ok-text="确定"
                   cancel-text="取消"
                   @confirm="handleDelete(record.id)"
@@ -153,91 +128,60 @@
         :rules="rules"
         layout="vertical"
       >
-        <a-form-item label="班级名称" name="name">
-          <a-input v-model:value="formData.name" placeholder="请输入班级名称" />
-        </a-form-item>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="年级" name="grade">
-              <a-select v-model:value="formData.grade" placeholder="选择年级">
-                <a-select-option value="一年级">一年级</a-select-option>
-                <a-select-option value="二年级">二年级</a-select-option>
-                <a-select-option value="三年级">三年级</a-select-option>
-                <a-select-option value="四年级">四年级</a-select-option>
-                <a-select-option value="五年级">五年级</a-select-option>
-                <a-select-option value="六年级">六年级</a-select-option>
-              </a-select>
+            <a-form-item label="课程名称" name="name">
+              <a-input v-model:value="formData.name" placeholder="请输入课程名称" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="学年" name="academicYear">
-              <a-select
-                v-model:value="formData.academicYear"
-                placeholder="选择学年"
-                allow-clear
-              >
-                <a-select-option
-                  v-for="option in academicYearOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </a-select-option>
-              </a-select>
+            <a-form-item label="课程代码" name="code">
+              <a-input v-model:value="formData.code" placeholder="请输入课程代码" />
             </a-form-item>
           </a-col>
         </a-row>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="状态" name="status">
-              <a-select
-                v-model:value="formData.status"
-                placeholder="选择状态"
-                :disabled="editId && formData.status === 'active' && currentClassStudentCount > 0 && formData.status === 'inactive'"
-              >
+            <a-form-item label="及格分数" name="passingScore">
+              <a-input-number
+                v-model:value="formData.passingScore"
+                :min="0"
+                :max="100"
+                style="width: 100%"
+                placeholder="及格分数"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="课程状态" name="status">
+              <a-select v-model:value="formData.status" placeholder="选择状态">
                 <a-select-option value="active">活跃</a-select-option>
-                <a-select-option
-                  value="inactive"
-                  :disabled="editId && currentClassStudentCount > 0"
-                >
-                  停用{{ editId && currentClassStudentCount > 0 ? ` (有${currentClassStudentCount}名学生)` : '' }}
-                </a-select-option>
+                <a-select-option value="inactive">停用</a-select-option>
               </a-select>
-              <div v-if="editId && currentClassStudentCount > 0 && formData.status === 'inactive'" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
-                该班级有 {{ currentClassStudentCount }} 名活跃学生，请先处理所有学生后再停用班级
-              </div>
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="备注" name="description">
-          <a-textarea
-            v-model:value="formData.description"
-            :rows="3"
-            placeholder="请输入备注信息"
-          />
-        </a-form-item>
       </a-form>
     </a-modal>
 
     <!-- 详情模态框 -->
     <a-modal
       v-model:open="viewModalVisible"
-      title="班级详情"
+      title="课程详情"
       :footer="null"
       width="600px"
     >
       <a-descriptions :column="2" bordered v-if="viewData">
-        <a-descriptions-item label="班级名称">{{ viewData.name }}</a-descriptions-item>
-        <a-descriptions-item label="年级">{{ viewData.grade }}</a-descriptions-item>
-        <a-descriptions-item label="学年">{{ viewData.academicYear }}</a-descriptions-item>
-        <a-descriptions-item label="学生人数">{{ viewData.studentCount }}人</a-descriptions-item>
-        <a-descriptions-item label="状态">
-          <a-tag :color="viewData.status === 'active' ? 'green' : 'red'">
-            {{ viewData.status === 'active' ? '活跃' : '停用' }}
+        <a-descriptions-item label="课程名称">{{ viewData.name }}</a-descriptions-item>
+        <a-descriptions-item label="课程代码">{{ viewData.code }}</a-descriptions-item>
+        <a-descriptions-item label="及格分数">{{ viewData.passingScore }}分</a-descriptions-item>
+        <a-descriptions-item label="课程状态">
+          <a-tag :color="getStatusColor(viewData.status)">
+            {{ getStatusText(viewData.status) }}
           </a-tag>
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">{{ viewData.createTime }}</a-descriptions-item>
-        <a-descriptions-item label="备注" :span="2">{{ viewData.description || '无' }}</a-descriptions-item>
+        <a-descriptions-item label="更新时间">{{ viewData.updateTime || '无' }}</a-descriptions-item>
       </a-descriptions>
     </a-modal>
   </div>
@@ -251,100 +195,46 @@ import {
   EditOutlined,
   DeleteOutlined,
   EyeOutlined,
-  ReloadOutlined,
-  InfoCircleOutlined
+  ReloadOutlined
 } from '@ant-design/icons-vue'
 
-// 使用全局的 ClassData 接口，在 env.d.ts 中定义
-
-// 获取当前学年
-const getCurrentAcademicYear = () => {
-  const currentDate = new Date()
-  const currentYear = currentDate.getFullYear()
-  const currentMonth = currentDate.getMonth() + 1 // 月份是0-based
-
-  // 如果是8月及以后，属于当前学年的第一学期（如2024年8月属于2024-2025学年）
-  // 如果是7月及以前，属于当前学年的第二学期（如2024年7月属于2023-2024学年）
-  if (currentMonth >= 8) {
-    return `${currentYear}-${currentYear + 1}`
-  } else {
-    return `${currentYear - 1}-${currentYear}`
-  }
-}
-
-const defaultAcademicYear = ref(getCurrentAcademicYear())
-
-// 生成学年选项
-const academicYearOptions = computed(() => {
-  const currentYear = new Date().getFullYear()
-  const options = [
-    {
-      value: defaultAcademicYear.value,
-      label: `${defaultAcademicYear.value} (当前)`
-    }
-  ]
-
-  // 生成过去5年和未来2年的选项
-  for (let i = -5; i <= 2; i++) {
-    const startYear = currentYear + i
-    const endYear = startYear + 1
-    const academicYear = `${startYear}-${endYear}`
-
-    // 避免重复添加当前学年
-    if (academicYear !== defaultAcademicYear.value) {
-      options.push({
-        value: academicYear,
-        label: academicYear
-      })
-    }
-  }
-
-  return options
-})
+// 使用全局的 CourseData 接口，在 env.d.ts 中定义
 
 // 响应式数据
 const searchText = ref('')
-const filterGrade = ref('')
-const filterAcademicYear = ref('') // 学年筛选
+const filterStatus = ref('')
 const modalVisible = ref(false)
 const viewModalVisible = ref(false)
-const modalTitle = ref('新增班级')
+const modalTitle = ref('新增课程')
 const editId = ref<number | null>(null)
-const viewData = ref<ClassData | null>(null)
+const viewData = ref<CourseData | null>(null)
 const formRef = ref()
-const currentClassStudentCount = ref(0)
 
 // 表格列定义
 const columns = [
   {
-    title: '班级名称',
+    title: '课程名称',
     dataIndex: 'name',
     key: 'name',
+    width: 150
+  },
+  {
+    title: '课程代码',
+    dataIndex: 'code',
+    key: 'code',
     width: 120
   },
   {
-    title: '年级',
-    dataIndex: 'grade',
-    key: 'grade',
-    width: 80
-  },
-  {
-    title: '学年',
-    dataIndex: 'academicYear',
-    key: 'academicYear',
-    width: 120
-  },
-  {
-    title: '学生人数',
-    dataIndex: 'studentCount',
-    key: 'studentCount',
+    title: '及格分数',
+    dataIndex: 'passingScore',
+    key: 'passingScore',
     width: 100
   },
   {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
-    width: 80
+    width: 100
   },
   {
     title: '操作',
@@ -371,81 +261,110 @@ const pagination = reactive({
 // 表单数据
 const formData = reactive({
   name: '',
-  grade: '',
-  academicYear: defaultAcademicYear.value, // 默认当前学年
-  status: 'active' as 'active' | 'inactive',
-  description: ''
+  code: '',
+  passingScore: 60,
+  status: 'active' as 'active' | 'inactive'
 })
+
+// 自定义验证规则
+const validateCode = async (rule: any, value: string) => {
+  if (!value) {
+    return Promise.reject('请输入课程代码')
+  }
+
+  // 检查课程代码是否已存在
+  const exists = await window.api.db.isCourseCodeExists(value, editId.value || undefined)
+  if (exists) {
+    return Promise.reject('课程代码已存在')
+  }
+
+  return Promise.resolve()
+}
 
 // 表单验证规则
 const rules = {
-  name: [{ required: true, message: '请输入班级名称' }],
-  grade: [{ required: true, message: '请选择年级' }],
-  academicYear: [{ required: true, message: '请选择学年' }]
+  name: [{ required: true, message: '请输入课程名称' }],
+  code: [
+    { required: true, message: '请输入课程代码' },
+    { validator: validateCode, trigger: 'blur' }
+  ],
+  passingScore: [{ required: true, message: '请输入及格分数' }],
+  status: [{ required: true, message: '请选择状态' }]
 }
 
-// 班级数据
-const classData = ref<ClassData[]>([])
+// 课程数据
+const courseData = ref<CourseData[]>([])
 
-// 加载班级数据
-const loadClasses = async () => {
+// 加载课程数据
+const loadCourses = async () => {
   try {
-    classData.value = await window.api.db.getAllClasses()
-    pagination.total = classData.value.length
+    courseData.value = await window.api.db.getAllCourses()
+    pagination.total = courseData.value.length
   } catch (error) {
-    console.error('加载班级数据失败:', error)
+    console.error('加载课程数据失败:', error)
     message.error('加载数据失败')
   }
 }
 
-// 统计信息
+// 加载统计信息
 const statistics = ref<{
-  totalClasses: number
-  totalStudents: number
-  activeClasses: number
-  averageStudents: number
+  totalCourses: number
+  activeCourses: number
+  averagePassingScore: number
 } | null>(null)
 
-// 加载统计信息
 const loadStatistics = async () => {
   try {
-    statistics.value = await window.api.db.getStatistics()
+    statistics.value = await window.api.db.getCourseStatistics()
   } catch (error) {
     console.error('加载统计信息失败:', error)
   }
 }
 
 // 计算属性
-const filteredData = ref<ClassData[]>([])
+const filteredData = ref<CourseData[]>([])
+
+const activeCoursesCount = computed(() => {
+  return statistics.value?.activeCourses || 0
+})
+
+const averagePassingScore = computed(() => {
+  return statistics.value?.averagePassingScore || 0
+})
 
 // 搜索函数
 const performSearch = async () => {
   try {
     const searchQuery = searchText.value || undefined
-    const gradeQuery = filterGrade.value || undefined
-    const academicYearQuery = filterAcademicYear.value || undefined
+    const statusQuery = filterStatus.value || undefined
 
-    filteredData.value = await window.api.db.searchClasses(searchQuery, gradeQuery, academicYearQuery)
+    filteredData.value = await window.api.db.searchCourses(searchQuery, statusQuery)
     pagination.total = filteredData.value.length
   } catch (error) {
     console.error('搜索失败:', error)
     message.error('搜索失败')
-    filteredData.value = classData.value
-    pagination.total = classData.value.length
+    filteredData.value = courseData.value
+    pagination.total = courseData.value.length
   }
 }
 
-const totalStudents = computed(() => {
-  return statistics.value?.totalStudents || 0
-})
 
-const activeClasses = computed(() => {
-  return statistics.value?.activeClasses || 0
-})
+const getStatusColor = (status: string) => {
+  const colors = {
+    active: 'green',
+    inactive: 'red',
+    completed: 'blue'
+  }
+  return colors[status as keyof typeof colors] || 'default'
+}
 
-const averageStudents = computed(() => {
-  return statistics.value?.averageStudents || 0
-})
+const getStatusText = (status: string) => {
+  const texts = {
+    active: '活跃',
+    inactive: '停用'
+  }
+  return texts[status as keyof typeof texts] || '未知'
+}
 
 // 方法
 const handleSearch = async () => {
@@ -460,44 +379,36 @@ const handleFilter = async () => {
 
 const handleReset = async () => {
   searchText.value = ''
-  filterGrade.value = ''
-  filterAcademicYear.value = ''
+  filterStatus.value = ''
   pagination.current = 1
   await performSearch()
 }
 
 const showAddModal = () => {
-  modalTitle.value = '新增班级'
+  modalTitle.value = '新增课程'
   editId.value = null
-  currentClassStudentCount.value = 0
   resetForm()
   modalVisible.value = true
 }
 
-const handleEdit = async (record: ClassData) => {
-  modalTitle.value = '编辑班级'
+const handleEdit = (record: CourseData) => {
+  modalTitle.value = '编辑课程'
   editId.value = record.id
   Object.assign(formData, record)
-
-  // 获取该班级的活跃学生数量
-  if (record.id) {
-    currentClassStudentCount.value = await window.api.db.getActiveStudentCount(record.id)
-  }
-
   modalVisible.value = true
 }
 
-const handleView = (record: ClassData) => {
+const handleView = (record: CourseData) => {
   viewData.value = record
   viewModalVisible.value = true
 }
 
 const handleDelete = async (id: number) => {
   try {
-    const success = await window.api.db.deleteClass(id)
+    const success = await window.api.db.deleteCourse(id)
     if (success) {
       message.success('删除成功')
-      await loadClasses()
+      await loadCourses()
       await loadStatistics()
       await performSearch()
     } else {
@@ -514,31 +425,30 @@ const handleSubmit = async () => {
     await formRef.value?.validate()
 
     // 创建纯对象，避免 Vue 响应式对象的序列化问题
-    const classData = {
+    const courseData = {
       name: formData.name,
-      grade: formData.grade,
-      academicYear: formData.academicYear,
-      status: formData.status,
-      description: formData.description
+      code: formData.code,
+      passingScore: formData.passingScore,
+      status: formData.status
     }
 
     if (editId.value) {
       // 编辑
-      const result = await window.api.db.updateClass(editId.value, classData)
-      if (result.success) {
+      const success = await window.api.db.updateCourse(editId.value, courseData)
+      if (success) {
         message.success('编辑成功')
-        await loadClasses()
+        await loadCourses()
         await loadStatistics()
         await performSearch()
       } else {
-        message.error(result.message || '编辑失败')
+        message.error('编辑失败')
       }
     } else {
       // 新增
-      const newClass = await window.api.db.addClass(classData)
-      if (newClass) {
+      const newCourse = await window.api.db.addCourse(courseData)
+      if (newCourse) {
         message.success('新增成功')
-        await loadClasses()
+        await loadCourses()
         await loadStatistics()
         await performSearch()
       } else {
@@ -561,23 +471,22 @@ const handleCancel = () => {
 const resetForm = () => {
   Object.assign(formData, {
     name: '',
-    grade: '',
-    academicYear: defaultAcademicYear.value, // 默认当前学年
-    status: 'active',
-    description: ''
+    code: '',
+    passingScore: 60,
+    status: 'active'
   })
   formRef.value?.resetFields()
 }
 
 onMounted(async () => {
-  await loadClasses()
+  await loadCourses()
   await loadStatistics()
   await performSearch()
 })
 </script>
 
 <style scoped>
-.class-manage {
+.course-manage {
   padding: 24px;
   background: #f5f5f5;
   min-height: 100%;
@@ -672,7 +581,7 @@ onMounted(async () => {
   color: rgba(0, 0, 0, 0.85);
 }
 
-/* Search input wrapper styling - remove borders from inner input to prevent double borders */
+/* Search input wrapper styling */
 :deep(.ant-input-affix-wrapper) {
   background: #ffffff !important;
   border: 1px solid #d9d9d9 !important;
@@ -688,7 +597,7 @@ onMounted(async () => {
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
 }
 
-/* Inner input within affix wrapper - no border to prevent double borders */
+/* Inner input within affix wrapper */
 :deep(.ant-input-affix-wrapper .ant-input) {
   background: transparent !important;
   border: none !important;
@@ -696,7 +605,7 @@ onMounted(async () => {
   box-shadow: none !important;
 }
 
-/* Standalone inputs (not in affix wrapper) */
+/* Standalone inputs */
 :deep(.ant-input:not(.ant-input-affix-wrapper .ant-input)) {
   background: #ffffff !important;
   border: 1px solid #d9d9d9 !important;
@@ -712,7 +621,6 @@ onMounted(async () => {
   border-color: #40a9ff !important;
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
 }
-
 
 :deep(.ant-input-affix-wrapper .ant-input-suffix) {
   color: rgba(0, 0, 0, 0.65) !important;

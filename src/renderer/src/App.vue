@@ -4,7 +4,10 @@ import {
   HomeOutlined,
   InfoCircleOutlined,
   AppstoreOutlined,
-  TeamOutlined
+  TeamOutlined,
+  UserOutlined,
+  BookOutlined,
+  TrophyOutlined
 } from '@ant-design/icons-vue'
 </script>
 
@@ -26,6 +29,18 @@ import {
         <RouterLink to="/class-manage" class="nav-link">
           <TeamOutlined />
           班级
+        </RouterLink>
+        <RouterLink to="/student-manage" class="nav-link">
+          <UserOutlined />
+          学生
+        </RouterLink>
+        <RouterLink to="/course-manage" class="nav-link">
+          <BookOutlined />
+          课程
+        </RouterLink>
+        <RouterLink to="/score-manage" class="nav-link">
+          <TrophyOutlined />
+          成绩
         </RouterLink>
         <RouterLink to="/about" class="nav-link">
           <InfoCircleOutlined />
