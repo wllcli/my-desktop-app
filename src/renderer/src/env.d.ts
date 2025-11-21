@@ -4,6 +4,8 @@ interface ElectronAPI {
   // 可以在这里添加其他 electronAPI 的类型定义
 }
 
+
+
 interface Api {
   db: {
     getAllClasses: () => Promise<ClassData[]>
@@ -50,6 +52,8 @@ interface Api {
     batchAddScores: (scores: any[]) => Promise<{ success: boolean; message: string; count: number }>
     updateScore: (id: number, scoreData: Partial<ScoreData>) => Promise<boolean>
     deleteScore: (id: number) => Promise<boolean>
+    // 获取课程成绩统计
+    getCourseScoreStatistics: (courseId: number, academicYear?: string, semester?: string) => Promise<ScoreStatistics | null>
     // 课程管理
     getAllCourses: () => Promise<CourseData[]>
     searchCourses: (searchText?: string, status?: string) => Promise<CourseData[]>
@@ -106,4 +110,41 @@ interface CourseData {
   status: 'active' | 'inactive'
   createTime: string
   updateTime?: string
+}
+
+// 成绩数据接口
+interface ScoreData {
+  id?: number
+  studentId: number
+  studentName: string
+  studentNumber?: string
+  className: string
+  courseId: number
+  courseName: string
+  courseCode: string
+  score: number
+  examType: 'midterm' | 'final' | 'regular' | 'quiz' | 'assignment'
+  academicYear: string
+  semester: 'first' | 'second'
+  examDate: string
+  status: 'active' | 'inactive'
+  createTime: string
+  updateTime?: string
+}
+
+// 成绩统计信息接口
+interface ScoreStatistics {
+  totalScores: number
+  averageScore: number
+  highestScore: number
+  lowestScore: number
+  passRate: number
+  excellentRate: number
+  goodRate: number
+  averageByClass: { className: string; average: number; count: number }[]
+  scoreDistribution: {
+    range: string
+    count: number
+    percentage: number
+  }[]
 }

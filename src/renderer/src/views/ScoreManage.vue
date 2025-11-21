@@ -100,6 +100,12 @@
               </template>
               批量导入
             </a-button>
+            <a-button type="primary" ghost @click="showAnalysisModal" style="margin-left: 8px;">
+              <template #icon>
+                <BarChartOutlined />
+              </template>
+              成绩分析
+            </a-button>
           </a-col>
         </a-row>
       </a-card>
@@ -372,6 +378,94 @@
       </a-space>
     </a-modal>
 
+    <!-- 成绩分析模态框 -->
+    <a-modal
+      v-model:open="analysisModalVisible"
+      title="课程成绩分析"
+      width="1000px"
+      :footer="null"
+    >
+      <a-space direction="vertical" style="width: 100%" size="large">
+        <a-card :bordered="false" style="background: #f5f5f5">
+          <a-form layout="inline">
+            <a-form-item label="选择课程">
+              <a-select
+                v-model:value="analysisCourseId"
+                style="width: 200px"
+                placeholder="请选择课程"
+                @change="loadAnalysisData"
+              >
+                <a-select-option v-for="course in courses" :key="course.id" :value="course.id">
+                  {{ course.name }} ({{ course.code }})
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="学年">
+              <a-select
+                v-model:value="analysisAcademicYear"
+                style="width: 150px"
+                @change="loadAnalysisData"
+              >
+                <a-select-option value="">全部</a-select-option>
+                <a-select-option v-for="year in academicYears" :key="year" :value="year">
+                  {{ year }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="学期">
+              <a-select
+                v-model:value="analysisSemester"
+                style="width: 120px"
+                @change="loadAnalysisData"
+              >
+                <a-select-option value="">全部</a-select-option>
+                <a-select-option value="first">第一学期</a-select-option>
+                <a-select-option value="second">第二学期</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-form>
+        </a-card>
+
+        <div v-if="analysisData">
+          <!-- 关键指标 -->
+          <a-row :gutter="16">
+            <a-col :span="4">
+              <a-statistic title="总人数" :value="analysisData.totalScores" />
+            </a-col>
+            <a-col :span="5">
+              <a-statistic title="平均分" :value="analysisData.averageScore" :precision="1" />
+            </a-col>
+            <a-col :span="5">
+              <a-statistic title="及格率" :value="analysisData.passRate" suffix="%" :precision="1" :value-style="{ color: '#3f8600' }" />
+            </a-col>
+            <a-col :span="5">
+              <a-statistic title="优秀率" :value="analysisData.excellentRate" suffix="%" :precision="1" :value-style="{ color: '#cf1322' }" />
+            </a-col>
+            <a-col :span="5">
+              <a-statistic title="最高/最低" :value="analysisData.highestScore + ' / ' + analysisData.lowestScore" />
+            </a-col>
+          </a-row>
+
+          <a-divider />
+
+          <!-- 图表区域 -->
+          <a-row :gutter="24">
+            <a-col :span="12">
+              <div style="height: 400px">
+                <VChart :option="scoreDistributionOption" style="width: 100%; height: 100%" />
+              </div>
+            </a-col>
+            <a-col :span="12">
+              <div style="height: 400px">
+                <VChart :option="classAverageOption" style="width: 100%; height: 100%" />
+              </div>
+            </a-col>
+          </a-row>
+        </div>
+        <a-empty v-else description="请选择课程查看分析数据" />
+      </a-space>
+    </a-modal>
+
     <!-- 详情模态框 -->
     <a-modal
       v-model:open="viewModalVisible"
@@ -408,7 +502,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, provide } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   PlusOutlined,
@@ -417,10 +511,34 @@ import {
   EyeOutlined,
   ReloadOutlined,
   UploadOutlined,
-  DownloadOutlined
+  DownloadOutlined,
+  BarChartOutlined
 } from '@ant-design/icons-vue'
 import * as XLSX from 'xlsx'
 import dayjs from 'dayjs'
+import VChart, { THEME_KEY } from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { PieChart, BarChart } from 'echarts/charts'
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+} from 'echarts/components'
+
+use([
+  CanvasRenderer,
+  PieChart,
+  BarChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+])
+
+// 提供 ECharts 主题
+provide(THEME_KEY, 'light')
 
 // 获取当前学年 - 先定义函数
 const getCurrentAcademicYear = () => {
@@ -1023,6 +1141,126 @@ const handleImport = async () => {
     importing.value = false
   }
 }
+
+// 成绩分析相关
+const analysisModalVisible = ref(false)
+const analysisCourseId = ref<number | undefined>(undefined)
+const analysisAcademicYear = ref('')
+const analysisSemester = ref<string | undefined>(undefined)
+const analysisData = ref<ScoreStatistics | null>(null)
+
+const showAnalysisModal = () => {
+  analysisModalVisible.value = true
+  // 默认选中第一个课程（如果有）
+  if (courses.value.length > 0 && !analysisCourseId.value) {
+    analysisCourseId.value = courses.value[0].id
+    loadAnalysisData()
+  }
+}
+
+const loadAnalysisData = async () => {
+  if (!analysisCourseId.value) return
+  
+  try {
+    const result = await window.api.db.getCourseScoreStatistics(
+      analysisCourseId.value,
+      analysisAcademicYear.value || undefined,
+      analysisSemester.value || undefined
+    )
+    analysisData.value = result
+  } catch (error) {
+    console.error('获取分析数据失败:', error)
+    message.error('获取分析数据失败')
+  }
+}
+
+// 分数分布图配置
+const scoreDistributionOption = computed(() => {
+  if (!analysisData.value) return {}
+  
+  return {
+    title: {
+      text: '分数段分布',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left'
+    },
+    series: [
+      {
+        name: '分数段',
+        type: 'pie',
+        radius: '50%',
+        data: analysisData.value.scoreDistribution.map(item => ({
+          value: item.count,
+          name: item.range
+        })),
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }
+    ]
+  }
+})
+
+// 班级平均分对比图配置
+const classAverageOption = computed(() => {
+  if (!analysisData.value) return {}
+  
+  return {
+    title: {
+      text: '班级平均分对比',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: [
+      {
+        type: 'category',
+        data: analysisData.value.averageByClass.map(item => item.className),
+        axisTick: {
+          alignWithLabel: true
+        }
+      }
+    ],
+    yAxis: [
+      {
+        type: 'value'
+      }
+    ],
+    series: [
+      {
+        name: '平均分',
+        type: 'bar',
+        barWidth: '60%',
+        data: analysisData.value.averageByClass.map(item => item.average),
+        label: {
+          show: true,
+          position: 'top'
+        }
+      }
+    ]
+  }
+})
 
 onMounted(async () => {
   // 按顺序加载数据，确保依赖关系正确
