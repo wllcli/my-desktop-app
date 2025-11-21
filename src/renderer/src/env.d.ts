@@ -32,6 +32,7 @@ interface Api {
     addStudent: (studentData: Omit<StudentData, 'id' | 'createTime' | 'updateTime'>) => Promise<StudentData | null>
     updateStudent: (id: number, studentData: Partial<StudentData>) => Promise<boolean>
     deleteStudent: (id: number) => Promise<boolean>
+    batchAddStudents: (students: { name: string; gender: string; className: string; studentNumber: string; phone: string }[]) => Promise<{ success: boolean; message: string; count: number }>
     // 课程管理
     getAllCourses: () => Promise<CourseData[]>
     searchCourses: (searchText?: string, status?: string) => Promise<CourseData[]>

@@ -27,7 +27,8 @@
     "ant-design-vue": "^4.2.6",
     "better-sqlite3": "^12.4.1",
     "electron-updater": "^6.3.9",
-    "vue-router": "^4.6.3"
+    "vue-router": "^4.6.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "3.0.0",

@@ -664,6 +664,64 @@ class DatabaseService {
     }
   }
 
+  // 批量添加学生
+  batchAddStudents(students: { name: string; gender: string; className: string; studentNumber: string; phone: string }[]): { success: boolean; message: string; count: number } {
+    if (!this.db) return { success: false, message: '数据库未连接', count: 0 }
+
+    try {
+      const now = new Date().toLocaleString()
+      let successCount = 0
+      let failCount = 0
+
+      const insertStudent = this.db.prepare(`
+        INSERT INTO students (name, gender, class_id, class_name, student_number, phone, status, create_time)
+        VALUES (?, ?, ?, ?, ?, ?, 'active', ?)
+      `)
+
+      const findClass = this.db.prepare('SELECT id FROM classes WHERE name = ?')
+
+      const transaction = this.db.transaction((students) => {
+        for (const student of students) {
+          // 查找班级ID
+          const classResult = findClass.get(student.className) as { id: number } | undefined
+          
+          if (!classResult) {
+            console.warn(`班级不存在: ${student.className}`)
+            failCount++
+            continue
+          }
+
+          try {
+            insertStudent.run(
+              student.name,
+              student.gender,
+              classResult.id,
+              student.className,
+              student.studentNumber,
+              student.phone,
+              now
+            )
+            successCount++
+          } catch (err) {
+            console.error(`添加学生失败: ${student.name}`, err)
+            failCount++
+          }
+        }
+      })
+
+      transaction(students)
+
+      return {
+        success: true,
+        message: `导入完成: 成功 ${successCount} 条，失败 ${failCount} 条`,
+        count: successCount
+      }
+    } catch (error) {
+      console.error('批量添加学生失败:', error)
+      return { success: false, message: '批量添加失败: ' + error.message, count: 0 }
+    }
+  }
+
   // 更新学生
   updateStudent(id: number, studentData: Partial<StudentData>): boolean {
     if (!this.db) return false

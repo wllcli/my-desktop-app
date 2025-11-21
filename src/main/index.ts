@@ -139,6 +139,11 @@ app.whenReady().then(() => {
     return dbService.deleteStudent(id)
   })
 
+  // 批量添加学生
+  ipcMain.handle('db:batchAddStudents', (_, students) => {
+    return dbService.batchAddStudents(students)
+  })
+
   // 课程管理 IPC 处理器
   // 获取所有课程
   ipcMain.handle('db:getAllCourses', () => {

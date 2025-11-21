@@ -43,6 +43,10 @@
               <PlusOutlined />
               新增学生
             </a-button>
+            <a-button type="default" @click="showImportModal" style="margin-left: 8px;">
+              <UploadOutlined />
+              批量导入
+            </a-button>
           </a-col>
         </a-row>
       </a-card>
@@ -189,6 +193,68 @@
       </a-form>
     </a-modal>
 
+    <!-- 批量导入模态框 -->
+    <a-modal
+      v-model:open="importModalVisible"
+      title="批量导入学生"
+      width="800px"
+      @ok="handleImport"
+      @cancel="handleImportCancel"
+      :confirmLoading="importing"
+    >
+      <a-space direction="vertical" style="width: 100%">
+        <a-alert
+          message="导入说明"
+          description="请下载模板文件，按照格式填写学生信息。班级名称必须与系统中的班级名称完全一致。"
+          type="info"
+          show-icon
+        />
+        
+        <a-row justify="space-between" align="middle">
+          <a-col>
+            <a-upload
+              :before-upload="handleBeforeUpload"
+              :show-upload-list="false"
+              accept=".xlsx, .xls"
+            >
+              <a-button>
+                <UploadOutlined />
+                选择 Excel 文件
+              </a-button>
+            </a-upload>
+          </a-col>
+          <a-col>
+            <a-button type="link" @click="downloadTemplate">
+              <DownloadOutlined />
+              下载模板
+            </a-button>
+          </a-col>
+        </a-row>
+
+        <div v-if="importData.length > 0">
+          <div style="margin: 16px 0; font-weight: bold;">
+            预览数据 (共 {{ importData.length }} 条)
+          </div>
+          <a-table
+            :columns="importColumns"
+            :data-source="importData"
+            :pagination="{ pageSize: 5 }"
+            size="small"
+            :scroll="{ y: 300 }"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'className'">
+                <span :style="{ color: isClassExists(record.className) ? 'inherit' : 'red' }">
+                  {{ record.className }}
+                  <span v-if="!isClassExists(record.className)" style="font-size: 12px;">(不存在)</span>
+                </span>
+              </template>
+            </template>
+          </a-table>
+        </div>
+      </a-space>
+    </a-modal>
+
     <!-- 详情模态框 -->
     <a-modal
       v-model:open="viewModalVisible"
@@ -225,8 +291,11 @@ import {
   EditOutlined,
   DeleteOutlined,
   EyeOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  UploadOutlined,
+  DownloadOutlined
 } from '@ant-design/icons-vue'
+import * as XLSX from 'xlsx'
 
 // 使用全局的 StudentData 接口，在 env.d.ts 中定义
 
@@ -239,6 +308,18 @@ const modalTitle = ref('新增学生')
 const editId = ref<number | null>(null)
 const viewData = ref<StudentData | null>(null)
 const formRef = ref()
+
+// 导入相关状态
+const importModalVisible = ref(false)
+const importData = ref<any[]>([])
+const importing = ref(false)
+const importColumns = [
+  { title: '姓名', dataIndex: 'name', key: 'name' },
+  { title: '性别', dataIndex: 'gender', key: 'gender' },
+  { title: '班级名称', dataIndex: 'className', key: 'className' },
+  { title: '学号', dataIndex: 'studentNumber', key: 'studentNumber' },
+  { title: '联系电话', dataIndex: 'phone', key: 'phone' }
+]
 
 // 班级数据
 const classes = ref<ClassData[]>([])
@@ -501,6 +582,100 @@ const resetForm = () => {
     status: 'active'
   })
   formRef.value?.resetFields()
+}
+
+// 导入相关方法
+const showImportModal = () => {
+  importModalVisible.value = true
+  importData.value = []
+}
+
+const handleImportCancel = () => {
+  importModalVisible.value = false
+  importData.value = []
+}
+
+const downloadTemplate = () => {
+  const template = [
+    ['姓名', '性别', '班级名称', '学号', '联系电话'],
+    ['张三', '男', '一年级一班', '20230101', '13800138000']
+  ]
+  const ws = XLSX.utils.aoa_to_sheet(template)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '学生导入模板')
+  XLSX.writeFile(wb, '学生导入模板.xlsx')
+}
+
+const handleBeforeUpload = (file: File) => {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const data = e.target?.result
+      const workbook = XLSX.read(data, { type: 'binary' })
+      const firstSheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[firstSheetName]
+      const results = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]
+      
+      // 解析数据，跳过表头
+      if (results.length > 1) {
+        const students = results.slice(1).map(row => ({
+          name: row[0] || '',
+          gender: row[1] || '',
+          className: row[2] || '',
+          studentNumber: row[3] ? String(row[3]) : '',
+          phone: row[4] ? String(row[4]) : ''
+        })).filter(s => s.name && s.className) // 过滤掉无效行
+        
+        importData.value = students
+        if (students.length === 0) {
+          message.warning('未解析到有效数据')
+        }
+      } else {
+        message.warning('文件内容为空')
+      }
+    } catch (error) {
+      console.error('解析 Excel 失败:', error)
+      message.error('解析文件失败')
+    }
+  }
+  reader.readAsBinaryString(file)
+  return false // 阻止默认上传
+}
+
+const isClassExists = (className: string) => {
+  return classes.value.some(c => c.name === className)
+}
+
+const handleImport = async () => {
+  if (importData.value.length === 0) {
+    message.warning('没有可导入的数据')
+    return
+  }
+
+  // 校验班级
+  const invalidClasses = importData.value.filter(s => !isClassExists(s.className))
+  if (invalidClasses.length > 0) {
+    message.error(`存在 ${invalidClasses.length} 条数据的班级不存在，请先创建班级或修改数据`)
+    return
+  }
+
+  importing.value = true
+  try {
+    const result = await window.api.db.batchAddStudents(importData.value)
+    if (result.success) {
+      message.success(result.message)
+      importModalVisible.value = false
+      await loadStudents()
+      await performSearch()
+    } else {
+      message.error(result.message)
+    }
+  } catch (error) {
+    console.error('导入失败:', error)
+    message.error('导入失败')
+  } finally {
+    importing.value = false
+  }
 }
 
 onMounted(async () => {
