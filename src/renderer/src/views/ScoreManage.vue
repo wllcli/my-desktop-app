@@ -94,6 +94,12 @@
               </template>
               录入成绩
             </a-button>
+            <a-button type="default" @click="showImportModal" style="margin-left: 8px;">
+              <template #icon>
+                <UploadOutlined />
+              </template>
+              批量导入
+            </a-button>
           </a-col>
         </a-row>
       </a-card>
@@ -298,6 +304,74 @@
       </a-form>
     </a-modal>
 
+    <!-- 批量导入模态框 -->
+    <a-modal
+      v-model:open="importModalVisible"
+      title="批量导入成绩"
+      width="900px"
+      @ok="handleImport"
+      @cancel="handleImportCancel"
+      :confirmLoading="importing"
+    >
+      <a-space direction="vertical" style="width: 100%">
+        <a-alert
+          message="导入说明"
+          description="请下载模板文件，按照格式填写成绩信息。系统将根据【学号】或【姓名】匹配学生，根据【课程代码】或【课程名称】匹配课程。"
+          type="info"
+          show-icon
+        />
+        
+        <a-row justify="space-between" align="middle">
+          <a-col>
+            <a-upload
+              :before-upload="handleBeforeUpload"
+              :show-upload-list="false"
+              accept=".xlsx, .xls"
+            >
+              <a-button>
+                <UploadOutlined />
+                选择 Excel 文件
+              </a-button>
+            </a-upload>
+          </a-col>
+          <a-col>
+            <a-button type="link" @click="downloadTemplate">
+              <DownloadOutlined />
+              下载模板
+            </a-button>
+          </a-col>
+        </a-row>
+
+        <div v-if="importData.length > 0">
+          <div style="margin: 16px 0; font-weight: bold;">
+            预览数据 (共 {{ importData.length }} 条)
+          </div>
+          <a-table
+            :columns="importColumns"
+            :data-source="importData"
+            :pagination="{ pageSize: 5 }"
+            size="small"
+            :scroll="{ y: 300 }"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'studentName'">
+                <span :style="{ color: isStudentExists(record) ? 'inherit' : 'red' }">
+                  {{ record.studentName }}
+                  <span v-if="!isStudentExists(record)" style="font-size: 12px;">(未找到)</span>
+                </span>
+              </template>
+              <template v-if="column.key === 'courseName'">
+                <span :style="{ color: isCourseExists(record) ? 'inherit' : 'red' }">
+                  {{ record.courseName }}
+                  <span v-if="!isCourseExists(record)" style="font-size: 12px;">(未找到)</span>
+                </span>
+              </template>
+            </template>
+          </a-table>
+        </div>
+      </a-space>
+    </a-modal>
+
     <!-- 详情模态框 -->
     <a-modal
       v-model:open="viewModalVisible"
@@ -341,8 +415,11 @@ import {
   EditOutlined,
   DeleteOutlined,
   EyeOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  UploadOutlined,
+  DownloadOutlined
 } from '@ant-design/icons-vue'
+import * as XLSX from 'xlsx'
 import dayjs from 'dayjs'
 
 // 获取当前学年 - 先定义函数
@@ -373,6 +450,22 @@ const modalTitle = ref('录入成绩')
 const editId = ref<number | null>(null)
 const viewData = ref<ScoreData | null>(null)
 const formRef = ref()
+
+// 导入相关状态
+const importModalVisible = ref(false)
+const importData = ref<any[]>([])
+const importing = ref(false)
+const importColumns = [
+  { title: '学生姓名', dataIndex: 'studentName', key: 'studentName' },
+  { title: '学号', dataIndex: 'studentNumber', key: 'studentNumber' },
+  { title: '课程名称', dataIndex: 'courseName', key: 'courseName' },
+  { title: '课程代码', dataIndex: 'courseCode', key: 'courseCode' },
+  { title: '分数', dataIndex: 'score', key: 'score' },
+  { title: '考试类型', dataIndex: 'examType', key: 'examType' },
+  { title: '学年', dataIndex: 'academicYear', key: 'academicYear' },
+  { title: '学期', dataIndex: 'semester', key: 'semester' },
+  { title: '考试日期', dataIndex: 'examDate', key: 'examDate' }
+]
 
 const defaultAcademicYear = ref(getCurrentAcademicYear())
 
@@ -804,13 +897,131 @@ const resetForm = () => {
     courseName: '',
     courseCode: '',
     score: null,
-    examType: '',
-    academicYear: defaultAcademicYear.value, // 默认当前学年
-    semester: '',
-    examDate: '',
+    examType: undefined,
+    academicYear: '',
+    semester: undefined,
+    examDate: null,
     status: 'active'
   })
   formRef.value?.resetFields()
+}
+
+// 导入相关方法
+const showImportModal = () => {
+  importModalVisible.value = true
+  importData.value = []
+}
+
+const handleImportCancel = () => {
+  importModalVisible.value = false
+  importData.value = []
+}
+
+const downloadTemplate = () => {
+  const template = [
+    ['学生姓名', '学号', '课程名称', '课程代码', '分数', '考试类型(midterm/final/regular/quiz/assignment)', '学年(如2024-2025)', '学期(first/second)', '考试日期(YYYY-MM-DD)'],
+    ['张三', '20230101', '高等数学', 'MATH101', 85, 'final', '2024-2025', 'first', '2024-01-15']
+  ]
+  const ws = XLSX.utils.aoa_to_sheet(template)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '成绩导入模板')
+  XLSX.writeFile(wb, '成绩导入模板.xlsx')
+}
+
+const handleBeforeUpload = (file: File) => {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const data = e.target?.result
+      const workbook = XLSX.read(data, { type: 'binary' })
+      const firstSheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[firstSheetName]
+      const results = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]
+      
+      // 解析数据，跳过表头
+      if (results.length > 1) {
+        const scores = results.slice(1).map(row => ({
+          studentName: row[0] || '',
+          studentNumber: row[1] ? String(row[1]) : '',
+          courseName: row[2] || '',
+          courseCode: row[3] ? String(row[3]) : '',
+          score: row[4] ? Number(row[4]) : 0,
+          examType: row[5] || 'regular',
+          academicYear: row[6] || '',
+          semester: row[7] || 'first',
+          examDate: row[8] ? String(row[8]) : ''
+        })).filter(s => s.studentName && s.courseName && s.score !== undefined)
+        
+        importData.value = scores
+        if (scores.length === 0) {
+          message.warning('未解析到有效数据')
+        }
+      } else {
+        message.warning('文件内容为空')
+      }
+    } catch (error) {
+      console.error('解析 Excel 失败:', error)
+      message.error('解析文件失败')
+    }
+  }
+  reader.readAsBinaryString(file)
+  return false // 阻止默认上传
+}
+
+const isStudentExists = (record: any) => {
+  // 优先匹配学号
+  if (record.studentNumber) {
+    return students.value.some(s => s.studentNumber === record.studentNumber)
+  }
+  // 其次匹配姓名
+  return students.value.some(s => s.name === record.studentName)
+}
+
+const isCourseExists = (record: any) => {
+  // 优先匹配代码
+  if (record.courseCode) {
+    return courses.value.some(c => c.code === record.courseCode)
+  }
+  // 其次匹配名称
+  return courses.value.some(c => c.name === record.courseName)
+}
+
+const handleImport = async () => {
+  if (importData.value.length === 0) {
+    message.warning('没有可导入的数据')
+    return
+  }
+
+  // 简单校验
+  const invalidStudents = importData.value.filter(s => !isStudentExists(s))
+  const invalidCourses = importData.value.filter(s => !isCourseExists(s))
+
+  if (invalidStudents.length > 0) {
+    message.error(`存在 ${invalidStudents.length} 条数据的学生未找到，请检查姓名或学号`)
+    return
+  }
+  if (invalidCourses.length > 0) {
+    message.error(`存在 ${invalidCourses.length} 条数据的课程未找到，请检查课程名称或代码`)
+    return
+  }
+
+  importing.value = true
+  try {
+    const result = await window.api.db.batchAddScores(importData.value)
+    if (result.success) {
+      message.success(result.message)
+      importModalVisible.value = false
+      await loadScores()
+      await performSearch()
+    } else {
+      message.error(result.message)
+    }
+  } catch (error) {
+    console.error('导入失败:', error)
+    message.error('导入失败')
+  } finally {
+    importing.value = false
+  }
 }
 
 onMounted(async () => {

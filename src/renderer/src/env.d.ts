@@ -32,7 +32,24 @@ interface Api {
     addStudent: (studentData: Omit<StudentData, 'id' | 'createTime' | 'updateTime'>) => Promise<StudentData | null>
     updateStudent: (id: number, studentData: Partial<StudentData>) => Promise<boolean>
     deleteStudent: (id: number) => Promise<boolean>
-    batchAddStudents: (students: { name: string; gender: string; className: string; studentNumber: string; phone: string }[]) => Promise<{ success: boolean; message: string; count: number }>
+    // 批量添加学生
+    batchAddStudents: (students: any[]) => Promise<{ success: boolean; message: string; count: number }>
+    
+    // 成绩管理
+    getAllScores: () => Promise<ScoreData[]>
+    searchScores: (
+      searchText?: string,
+      courseId?: number,
+      classId?: number,
+      examType?: string,
+      academicYear?: string,
+      semester?: string
+    ) => Promise<ScoreData[]>
+    addScore: (scoreData: Omit<ScoreData, 'id' | 'createTime' | 'updateTime'>) => Promise<ScoreData | null>
+    // 批量添加成绩
+    batchAddScores: (scores: any[]) => Promise<{ success: boolean; message: string; count: number }>
+    updateScore: (id: number, scoreData: Partial<ScoreData>) => Promise<boolean>
+    deleteScore: (id: number) => Promise<boolean>
     // 课程管理
     getAllCourses: () => Promise<CourseData[]>
     searchCourses: (searchText?: string, status?: string) => Promise<CourseData[]>

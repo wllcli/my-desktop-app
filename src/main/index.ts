@@ -91,8 +91,13 @@ app.whenReady().then(() => {
     return dbService.deleteClass(id)
   })
 
-  // 获取统计信息
-  ipcMain.handle('db:getStatistics', () => {
+  // 批量添加成绩
+  ipcMain.handle('db:batchAddScores', (_, scores) => {
+    return dbService.batchAddScores(scores)
+  })
+
+  // 成绩统计
+  ipcMain.handle('db:getScoreStatistics', () => {
     return dbService.getStatistics()
   })
 

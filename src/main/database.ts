@@ -722,6 +722,124 @@ class DatabaseService {
     }
   }
 
+  // 批量添加成绩
+  batchAddScores(scores: {
+    studentName: string;
+    studentNumber: string;
+    courseName: string;
+    courseCode: string;
+    score: number;
+    examType: string;
+    academicYear: string;
+    semester: string;
+    examDate: string;
+  }[]): { success: boolean; message: string; count: number } {
+    if (!this.db) return { success: false, message: '数据库未连接', count: 0 }
+
+    try {
+      const now = new Date().toLocaleString()
+      let successCount = 0
+      let failCount = 0
+      const errors: string[] = []
+
+      const insertScore = this.db.prepare(`
+        INSERT INTO scores (
+          student_id, student_name, student_number, class_name,
+          course_id, course_name, course_code,
+          score, exam_type, academic_year, semester, exam_date,
+          status, create_time
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+      `)
+
+      // 查找学生 (通过姓名和学号匹配，或者仅姓名)
+      // 优先匹配学号，因为学号唯一
+      const findStudentByNumber = this.db.prepare('SELECT id, class_name FROM students WHERE student_number = ?')
+      const findStudentByName = this.db.prepare('SELECT id, class_name FROM students WHERE name = ?')
+      
+      // 查找课程 (通过代码或名称)
+      const findCourseByCode = this.db.prepare('SELECT id FROM courses WHERE code = ?')
+      const findCourseByName = this.db.prepare('SELECT id, code FROM courses WHERE name = ?')
+
+      const transaction = this.db.transaction((scores) => {
+        for (const item of scores) {
+          let student: { id: number; class_name: string } | undefined
+          let course: { id: number; code?: string } | undefined
+
+          // 1. 查找学生
+          if (item.studentNumber) {
+            student = findStudentByNumber.get(item.studentNumber) as any
+          }
+          if (!student && item.studentName) {
+            // 如果没学号或学号没找到，尝试用姓名找 (注意：重名问题这里简单处理，取第一个)
+            student = findStudentByName.get(item.studentName) as any
+          }
+
+          if (!student) {
+            failCount++
+            errors.push(`学生未找到: ${item.studentName} (${item.studentNumber || '无学号'})`)
+            continue
+          }
+
+          // 2. 查找课程
+          if (item.courseCode) {
+            course = findCourseByCode.get(item.courseCode) as any
+          }
+          if (!course && item.courseName) {
+            course = findCourseByName.get(item.courseName) as any
+          }
+
+          if (!course) {
+            failCount++
+            errors.push(`课程未找到: ${item.courseName} (${item.courseCode || '无代码'})`)
+            continue
+          }
+
+          // 3. 插入成绩
+          try {
+            insertScore.run(
+              student.id,
+              item.studentName, // 使用导入时的姓名，或者 student.name? 这里保持导入值或数据库值均可，这里用导入值
+              item.studentNumber,
+              student.class_name,
+              course.id,
+              item.courseName,
+              item.courseCode || course.code, // 如果导入没代码，用数据库的
+              item.score,
+              item.examType,
+              item.academicYear,
+              item.semester,
+              item.examDate,
+              now
+            )
+            successCount++
+          } catch (err) {
+            console.error(`添加成绩失败: ${item.studentName} - ${item.courseName}`, err)
+            failCount++
+            errors.push(`添加失败: ${item.studentName} - ${item.courseName}`)
+          }
+        }
+      })
+
+      transaction(scores)
+
+      let message = `导入完成: 成功 ${successCount} 条，失败 ${failCount} 条`
+      if (errors.length > 0) {
+        // 只显示前5条错误
+        message += `\n错误详情(前5条):\n${errors.slice(0, 5).join('\n')}`
+      }
+
+      return {
+        success: true,
+        message,
+        count: successCount
+      }
+    } catch (error) {
+      console.error('批量添加成绩失败:', error)
+      return { success: false, message: '批量添加失败: ' + error.message, count: 0 }
+    }
+  }
+
   // 更新学生
   updateStudent(id: number, studentData: Partial<StudentData>): boolean {
     if (!this.db) return false
